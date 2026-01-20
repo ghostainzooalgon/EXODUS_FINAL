@@ -1,0 +1,32 @@
+# EXO_MANIFEST_LOG.md - Non archivé mais lisible par l'Empereur
+# EXO_MANIFEST_LOG.md
+
+# Fichiers temporaires et résultats de run
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Résultats de génération (ne pas commiter)
+**/EXO_MISSION_READY.json
+**/EXO_LIP_SYNC.json
+**/EXO_DATA_RAW.json
+**/EXO_VOICE_FINAL.mp3
+
+# Fichiers audio de test
+**/Voice_Samples/*.wav
+**/Voice_Samples/*.mp3
+
+# Outils téléchargés
+tools/rhubarb-lip-sync*
+tools/res/
+tools/*.zip
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

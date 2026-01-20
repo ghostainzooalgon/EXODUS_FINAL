@@ -1,0 +1,32 @@
+EXODUS_SYSTEM/
+│
+├── CODEX_EXODUS.md                    # Doctrine générale et architecture
+├── EXO_MISSION_SCHEMA.json            # Schéma JSON standard pour les missions
+├── README.md                          # Documentation principale
+├── STRUCTURE.txt                      # Ce fichier
+│
+├── SEGMENT_01/                        # L'INQUISITION (L'Analyseur)
+│   ├── 01_EYE_EXPLICATIVE.md         # Notes explicatives du Segment 01
+│   ├── EXO_EYE_TECH.md                # Notes techniques détaillées
+│   ├── requirements.txt               # Dépendances Python
+│   └── [CODE PYTHON À VENIR]
+│       ├── EXO_EYE_SCAN_MOTION_v1.0.py
+│       ├── EXO_EYE_SCAN_CAMERA_v1.0.py
+│       ├── EXO_EYE_SCAN_DIALOGUE_v1.0.py
+│       └── EXO_EYE_MAIN_v1.0.py
+│
+├── SEGMENT_02/                        # LE CORTEX D'ALPHARIUS
+│   ├── 02_CORTEX_EXPLICATIVE.md      # Notes explicatives
+│   └── EXO_CORTEX_TECH.md            # Notes techniques
+│
+├── SEGMENT_03/                        # LE MANUFACTORUM
+│   ├── 03_FORGE_EXPLICATIVE.md       # Notes explicatives
+│   └── EXO_FORGE_TECH.md             # Notes techniques
+│
+└── SEGMENT_04/                        # L'INFILTRATION
+    ├── 04_GHOST_EXPLICATIVE.md       # Notes explicatives
+    └── EXO_GHOST_TECH.md             # Notes techniques
+
+STATUT: ✅ Arborescence complète créée
+PROCHAINE ÉTAPE: Génération du code Python pour SEGMENT 01 (EXO_EYE)
+

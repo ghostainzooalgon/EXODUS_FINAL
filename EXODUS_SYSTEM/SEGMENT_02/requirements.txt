@@ -1,0 +1,21 @@
+# EXO_CORTEX - SEGMENT 02 Requirements
+# Python 3.10+
+# ⚠️ LOI DU ZÉRO DOLLAR : Tous les composants sont Open-Source/Freeware
+
+# Rhubarb LipSync (Open Source - Synchronisation labiale)
+# Installation: pip install rhubarb-lipsync
+# Ou via: https://github.com/DanielSWolf/rhubarb-lip-sync
+rhubarb-lip-sync>=1.0.0
+
+# Traitement audio (Librosa - Open Source)
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# Utilitaires (Tous Open Source)
+numpy>=1.24.0
+json5>=0.9.0
+tqdm>=4.66.0
+
+# Gestion de fichiers
+pathlib2>=2.3.7
+

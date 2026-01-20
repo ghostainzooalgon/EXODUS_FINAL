@@ -1,0 +1,59 @@
+{
+  "mission_id": "EXO_MISSION_YYYYMMDD_HHMMSS",
+  "status": "pending|in_progress|completed|failed",
+  "segments": {
+    "segment_01_eye": {
+      "status": "pending",
+      "input": {
+        "source_video": "path/to/source.mp4"
+      },
+      "output": {
+        "exo_data_raw": "path/to/EXO_DATA_RAW.json"
+      },
+      "timestamp": null
+    },
+    "segment_02_cortex": {
+      "status": "pending",
+      "input": {
+        "exo_data_raw": "path/to/EXO_DATA_RAW.json"
+      },
+      "output": {
+        "exo_audio_final": "path/to/EXO_AUDIO_FINAL.mp3",
+        "exo_lip_sync": "path/to/EXO_LIP_SYNC.json"
+      },
+      "timestamp": null
+    },
+    "segment_03_forge": {
+      "status": "pending",
+      "input": {
+        "exo_data_raw": "path/to/EXO_DATA_RAW.json",
+        "exo_audio_final": "path/to/EXO_AUDIO_FINAL.mp3",
+        "exo_lip_sync": "path/to/EXO_LIP_SYNC.json",
+        "roblox_models": ["path/to/model1.glb", "path/to/model2.glb"]
+      },
+      "output": {
+        "exo_final_render": "path/to/EXO_FINAL_RENDER.mp4"
+      },
+      "timestamp": null
+    },
+    "segment_04_ghost": {
+      "status": "pending",
+      "input": {
+        "exo_final_render": "path/to/EXO_FINAL_RENDER.mp4"
+      },
+      "output": {
+        "youtube_url": null,
+        "blogger_url": null,
+        "metrics": {}
+      },
+      "timestamp": null
+    }
+  },
+  "metadata": {
+    "created_at": "YYYY-MM-DDTHH:MM:SS",
+    "updated_at": "YYYY-MM-DDTHH:MM:SS",
+    "target_revenue": 300000,
+    "currency": "USD"
+  }
+}
+

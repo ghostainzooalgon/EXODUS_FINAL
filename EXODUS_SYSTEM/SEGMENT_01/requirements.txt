@@ -1,0 +1,26 @@
+# EXO_EYE - SEGMENT 01 Requirements
+# Python 3.10+
+# ⚠️ LOI DU ZÉRO DOLLAR : Tous les composants sont Open-Source/Freeware
+
+# Vision et traitement d'image (OpenCV - Open Source)
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+
+# Pose Tracking (MediaPipe - Open Source Google)
+mediapipe>=0.10.0
+
+# Audio-to-Text (Whisper LOCAL - Open Source, pas d'API payante)
+# ✅ Version Library locale, fonctionne sans clé API
+openai-whisper>=20231117
+
+# Utilitaires (Tous Open Source)
+numpy>=1.24.0
+json5>=0.9.0
+tqdm>=4.66.0
+
+# Gestion de fichiers
+pathlib2>=2.3.7
+
+# Monitoring RAM (pour test sur système 8Go)
+psutil>=5.9.0
+
