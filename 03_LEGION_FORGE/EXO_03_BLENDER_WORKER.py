@@ -226,7 +226,7 @@ class EXOForge:
         # Qualité High / Perceptually Lossless
         # CRF : 18 = High Quality (perceptually lossless), 23 = Default, 28 = Low
         scene.render.ffmpeg.constant_rate_factor = 'HIGH'  # Utilise la constante HIGH de Blender
-        scene.render.ffmpeg.ffmpeg_preset = 'SLOW'  # Preset lent = meilleure compression
+        scene.render.ffmpeg.ffmpeg_preset = 'GOOD'  # Preset standard de qualité (Blender 4.0)
         
         # Configuration audio (si présent)
         scene.render.ffmpeg.audio_codec = 'AAC'

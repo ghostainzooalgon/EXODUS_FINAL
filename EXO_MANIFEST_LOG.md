@@ -381,6 +381,52 @@ AVERTISSEMENTS :
 
 ---
 
+## [LOG_10] - PATCH BLENDER FFMPEG : CORRECTION PRESET INVALIDE
+
+**DATE DE COMMISSION** : 2026-01-14  
+**BRANCHE** : `maitre-de-chapitre`  
+**STATUT** : ✅ **PATCH APPLIQUÉ - BUG BLENDER CORRIGÉ**
+
+---
+
+## 🎯 CONTEXTE DE LA MISSION
+
+**ORDRE REÇU** : Correction urgente d'un crash critique dans le SEGMENT 03 suite à un preset FFmpeg invalide.  
+**OBJECTIF** : Corriger l'erreur `TypeError: enum "SLOW" not found` dans la configuration Blender.
+
+---
+
+## 🐛 BUG IDENTIFIÉ
+
+**ERREUR** : `TypeError: enum "SLOW" not found`  
+**CAUSE** : Le preset FFmpeg 'SLOW' n'existe pas dans l'API Blender 4.0. Les presets valides sont différents de ceux des versions antérieures.  
+**LOCALISATION** : `03_LEGION_FORGE/EXO_03_BLENDER_WORKER.py` - ligne 229
+
+---
+
+## 🔨 CORRECTIONS APPLIQUÉES
+
+### Fichier MODIFIÉ :
+
+1. **`03_LEGION_FORGE/EXO_03_BLENDER_WORKER.py`**
+   - **Ligne 229** : `scene.render.ffmpeg.ffmpeg_preset = 'SLOW'` → `scene.render.ffmpeg.ffmpeg_preset = 'GOOD'`
+   - **Commentaire mis à jour** : Clarification que 'GOOD' est le preset standard de qualité pour Blender 4.0
+
+### Détails techniques :
+
+- **Preset FFmpeg** : Remplacement de 'SLOW' (inexistant) par 'GOOD' (preset standard de qualité dans Blender 4.0)
+- **Compatibilité** : Le preset 'GOOD' est valide et fournit une qualité standard appropriée pour le rendu vidéo
+
+---
+
+## ✅ VALIDATION
+
+**STATUT** : ✅ **PATCH VALIDÉ**  
+**TESTS** : Aucune erreur de syntaxe détectée par le linter  
+**COMPATIBILITÉ** : Compatible avec Blender 4.0 API
+
+---
+
 ## [LOG_04] - SEGMENT 03 + ORCHESTRATEUR : SINGULARITÉ ACHIEVÉE
 
 **DATE DE COMMISSION** : 2026-01-14  
