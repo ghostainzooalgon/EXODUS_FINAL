@@ -256,7 +256,7 @@ class EXODNAScanner:
         Extrait les landmarks de pose (33 points MediaPipe Pose)
         
         Args:
-            pose_landmarks: Objet MediaPipe Pose landmarks
+            pose_landmarks: Liste de landmarks MediaPipe Pose (déjà une liste avec PoseLandmarker)
             
         Returns:
             Dictionnaire avec all_33_landmarks
@@ -265,7 +265,7 @@ class EXODNAScanner:
             return {"all_33_landmarks": []}
         
         all_landmarks = []
-        for idx, landmark in enumerate(pose_landmarks.landmark):
+        for idx, landmark in enumerate(pose_landmarks):
             all_landmarks.append({
                 "x": float(landmark.x),
                 "y": float(landmark.y),
@@ -448,9 +448,9 @@ class EXODNAScanner:
             # Calcul de la position X pour chaque pose (utilise le nez = landmark 0)
             pose_candidates = []
             for pose_lmk in pose_landmarks_list:
-                if not pose_lmk.landmark:
+                if not pose_lmk:
                     continue
-                nose = pose_lmk.landmark[0]
+                nose = pose_lmk[0]
                 center_x = float(nose.x)
                 pose_candidates.append((center_x, pose_lmk))
 
