@@ -566,10 +566,8 @@ class EXODNAScanner:
         # Transcription audio (une seule fois pour toute la vidéo)
         self.audio_transcription = self.transcribe_audio(self.video_path)
         
-        # Ajout de la transcription à toutes les frames (ou seulement aux frames pertinentes)
-        # Pour simplifier, on l'ajoute à la première frame
-        if self.frames_data:
-            self.frames_data[0]["audio_transcription"] = self.audio_transcription
+        # Note: La transcription audio est ajoutée dans output_data sous "audio_transcription_global"
+        # (architecture Multi-Acteurs : pas de frames_data, utilisation de actors_data)
     
     def save_output(self):
         """
@@ -597,7 +595,7 @@ class EXODNAScanner:
             raise
         
         print(f"[OK] Donnees sauvegardees: {self.output_path}")
-        print(f"[INFO] Total frames: {len(self.frames_data)}")
+        print(f"[INFO] Total frames: {len(self.camera_motion)}")
 
 
 def main():

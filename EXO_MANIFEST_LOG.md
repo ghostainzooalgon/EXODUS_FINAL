@@ -333,6 +333,54 @@ AVERTISSEMENTS :
 
 ---
 
+## [LOG_09] - PATCH SAUVEGARDE JSON : CORRECTION ARCHITECTURE MULTI-ACTEURS
+
+**DATE DE COMMISSION** : 2026-01-14  
+**BRANCHE** : `maitre-de-chapitre`  
+**STATUT** : ✅ **PATCH APPLIQUÉ - BUG SAUVEGARDE CORRIGÉ**
+
+---
+
+## 🎯 CONTEXTE DE LA MISSION
+
+**ORDRE REÇU** : Correction urgente d'un bug dans la fonction de sauvegarde suite à la migration vers l'architecture Multi-Acteurs.  
+**OBJECTIF** : Corriger l'erreur `AttributeError: 'EXODNAScanner' object has no attribute 'frames_data'` dans la sauvegarde JSON.
+
+---
+
+## 🐛 BUG IDENTIFIÉ
+
+**ERREUR** : `AttributeError: 'EXODNAScanner' object has no attribute 'frames_data'`  
+**CAUSE** : La variable `self.frames_data` a été remplacée par `self.actors_data` dans la nouvelle architecture Multi-Acteurs, mais des références obsolètes subsistaient dans la fonction de sauvegarde.  
+**LOCALISATION** : `01_EYE_INQUISITION/EXO_01_DNA_SCANNER.py` - lignes 571, 572, 600
+
+---
+
+## 🔨 CORRECTIONS APPLIQUÉES
+
+### Fichier MODIFIÉ :
+
+1. **`01_EYE_INQUISITION/EXO_01_DNA_SCANNER.py`**
+   - **Lignes 571-572** : Suppression de la référence obsolète à `self.frames_data` pour l'ajout de la transcription audio (déjà géré dans `output_data` sous `audio_transcription_global`)
+   - **Ligne 600** : `print(f"[INFO] Total frames: {len(self.frames_data)}")` → `print(f"[INFO] Total frames: {len(self.camera_motion)}")`
+   - **Documentation mise à jour** : Commentaire explicatif sur l'architecture Multi-Acteurs
+
+### Détails techniques :
+
+- **Fonction `process_video()`** (lignes 569-570) : Suppression du code obsolète qui tentait d'ajouter la transcription à `frames_data[0]`
+- **Fonction `save_output()`** (ligne 598) : Utilisation de `len(self.camera_motion)` pour compter le total de frames (une entrée par frame)
+- **Architecture validée** : La sauvegarde utilise correctement `self.actors_data` et `self.camera_motion` comme prévu
+
+---
+
+## ✅ VALIDATION
+
+**STATUT** : ✅ **PATCH VALIDÉ**  
+**TESTS** : Aucune erreur de syntaxe détectée par le linter  
+**ARCHITECTURE** : Compatible avec l'architecture Multi-Acteurs (actors_data au lieu de frames_data)
+
+---
+
 ## [LOG_04] - SEGMENT 03 + ORCHESTRATEUR : SINGULARITÉ ACHIEVÉE
 
 **DATE DE COMMISSION** : 2026-01-14  
