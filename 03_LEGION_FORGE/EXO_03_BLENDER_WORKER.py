@@ -623,114 +623,127 @@ class EXOForge:
         
         # Helper : appliquer une animation à UNE armature à partir d'une liste motion_data
         def _apply_animation_to_armature(target_armature, motion_data):
-            # Mode POSE : Activer le mode pose pour l'armature
-            bpy.context.view_layer.objects.active = target_armature
-            bpy.ops.object.mode_set(mode='POSE')
-
-            # Récupérer les bones
-            pose_bones = target_armature.pose.bones
-        
-        # Fonction helper pour trouver un landmark par ID
-        def find_landmark(landmarks, landmark_id):
-            """Trouve un landmark par son ID"""
-            for landmark in landmarks:
-                if landmark.get('landmark_id') == landmark_id:
-                    return landmark
-            return None
-        
-        # Fonction helper pour calculer la rotation quaternion
-        def calculate_bone_rotation(start_landmark, end_landmark, bone_default_dir):
             """
-            Calcule la rotation quaternion pour aligner un bone sur un vecteur
-            
-            Args:
-                start_landmark: Landmark de départ (dict avec x, y, z)
-                end_landmark: Landmark d'arrivée (dict avec x, y, z)
-                bone_default_dir: Direction par défaut du bone (Vector)
-            
-            Returns:
-                Quaternion de rotation
+            Applique l'animation à une armature et retourne TOUJOURS un entier (nombre de frames animées).
+            Retourne 0 si aucune animation n'est appliquée ou en cas d'erreur.
             """
-            if start_landmark is None or end_landmark is None:
-                return None
-            
-            # Vecteur directeur MediaPipe (Point_B - Point_A)
-            mp_vector = Vector((
-                end_landmark['x'] - start_landmark['x'],
-                end_landmark['y'] - start_landmark['y'],
-                end_landmark['z'] - start_landmark['z']
-            ))
-            
-            # Normaliser
-            if mp_vector.length == 0:
-                return None
-            
-            mp_vector.normalize()
-            
-            # Direction par défaut du bone (normalisée)
-            bone_dir = bone_default_dir.normalized()
-            
-            # Calculer la rotation pour aligner bone_dir sur mp_vector
-            # Utiliser rotation_difference pour obtenir le quaternion
             try:
-                rotation = bone_dir.rotation_difference(mp_vector)
-                return rotation
-            except:
-                # Fallback : rotation identité si échec
-                return Quaternion((1, 0, 0, 0))
-        
-            # Lissage simple (moyenne mobile sur 3 frames)
-            previous_rotations = {}
+                # Mode POSE : Activer le mode pose pour l'armature
+                bpy.context.view_layer.objects.active = target_armature
+                bpy.ops.object.mode_set(mode='POSE')
 
-            total_frames = len(motion_data)
-            print(f"[INFO] Application de l'animation sur {total_frames} frames → {target_armature.name}")
+                # Récupérer les bones
+                pose_bones = target_armature.pose.bones
+                
+                # Fonction helper pour trouver un landmark par ID
+                def find_landmark(landmarks, landmark_id):
+                    """Trouve un landmark par son ID"""
+                    for landmark in landmarks:
+                        if landmark.get('landmark_id') == landmark_id:
+                            return landmark
+                    return None
+                
+                # Fonction helper pour calculer la rotation quaternion
+                def calculate_bone_rotation(start_landmark, end_landmark, bone_default_dir):
+                    """
+                    Calcule la rotation quaternion pour aligner un bone sur un vecteur
+                    
+                    Args:
+                        start_landmark: Landmark de départ (dict avec x, y, z)
+                        end_landmark: Landmark d'arrivée (dict avec x, y, z)
+                        bone_default_dir: Direction par défaut du bone (Vector)
+                    
+                    Returns:
+                        Quaternion de rotation
+                    """
+                    if start_landmark is None or end_landmark is None:
+                        return None
+                    
+                    # Vecteur directeur MediaPipe (Point_B - Point_A)
+                    mp_vector = Vector((
+                        end_landmark['x'] - start_landmark['x'],
+                        end_landmark['y'] - start_landmark['y'],
+                        end_landmark['z'] - start_landmark['z']
+                    ))
+                    
+                    # Normaliser
+                    if mp_vector.length == 0:
+                        return None
+                    
+                    mp_vector.normalize()
+                    
+                    # Direction par défaut du bone (normalisée)
+                    bone_dir = bone_default_dir.normalized()
+                    
+                    # Calculer la rotation pour aligner bone_dir sur mp_vector
+                    # Utiliser rotation_difference pour obtenir le quaternion
+                    try:
+                        rotation = bone_dir.rotation_difference(mp_vector)
+                        return rotation
+                    except:
+                        # Fallback : rotation identité si échec
+                        return Quaternion((1, 0, 0, 0))
+                
+                # Lissage simple (moyenne mobile sur 3 frames)
+                previous_rotations = {}
 
-            for frame_idx, frame_data in enumerate(motion_data):
-                frame_number = frame_data.get('frame_number', frame_idx)
-                pose_landmarks = frame_data.get('pose_landmarks', [])
+                total_frames = len(motion_data)
+                print(f"[INFO] Application de l'animation sur {total_frames} frames → {target_armature.name}")
 
-                bpy.context.scene.frame_set(frame_number)
+                for frame_idx, frame_data in enumerate(motion_data):
+                    frame_number = frame_data.get('frame_number', frame_idx)
+                    pose_landmarks = frame_data.get('pose_landmarks', [])
 
-                for bone_name, (start_id, end_id) in bone_mapping.items():
-                    if bone_name not in pose_bones:
-                        bone_found = None
-                        for variant in [bone_name, bone_name.lower(), bone_name.upper(),
-                                       f"Left{bone_name}", f"Right{bone_name}"]:
-                            if variant in pose_bones:
-                                bone_found = variant
-                                break
-                        if bone_found is None:
+                    bpy.context.scene.frame_set(frame_number)
+
+                    for bone_name, (start_id, end_id) in bone_mapping.items():
+                        if bone_name not in pose_bones:
+                            bone_found = None
+                            for variant in [bone_name, bone_name.lower(), bone_name.upper(),
+                                           f"Left{bone_name}", f"Right{bone_name}"]:
+                                if variant in pose_bones:
+                                    bone_found = variant
+                                    break
+                            if bone_found is None:
+                                continue
+                            bone_name = bone_found
+
+                        bone = pose_bones[bone_name]
+
+                        start_landmark = find_landmark(pose_landmarks, start_id)
+                        end_landmark = find_landmark(pose_landmarks, end_id)
+
+                        if start_landmark and start_landmark.get('visibility', 0) < 0.5:
                             continue
-                        bone_name = bone_found
+                        if end_landmark and end_landmark.get('visibility', 0) < 0.5:
+                            continue
 
-                    bone = pose_bones[bone_name]
+                        bone_default_dir = (bone.tail - bone.head).normalized()
+                        if bone_default_dir.length == 0:
+                            bone_default_dir = Vector((0, 1, 0))
 
-                    start_landmark = find_landmark(pose_landmarks, start_id)
-                    end_landmark = find_landmark(pose_landmarks, end_id)
+                        rotation = calculate_bone_rotation(start_landmark, end_landmark, bone_default_dir)
+                        if rotation is None:
+                            continue
 
-                    if start_landmark and start_landmark.get('visibility', 0) < 0.5:
-                        continue
-                    if end_landmark and end_landmark.get('visibility', 0) < 0.5:
-                        continue
+                        if bone_name in previous_rotations:
+                            prev_rot = previous_rotations[bone_name]
+                            rotation = prev_rot.slerp(rotation, 0.7)
 
-                    bone_default_dir = (bone.tail - bone.head).normalized()
-                    if bone_default_dir.length == 0:
-                        bone_default_dir = Vector((0, 1, 0))
+                        bone.rotation_quaternion = rotation
+                        bone.keyframe_insert(data_path="rotation_quaternion", frame=frame_number)
+                        previous_rotations[bone_name] = rotation
 
-                    rotation = calculate_bone_rotation(start_landmark, end_landmark, bone_default_dir)
-                    if rotation is None:
-                        continue
-
-                    if bone_name in previous_rotations:
-                        prev_rot = previous_rotations[bone_name]
-                        rotation = prev_rot.slerp(rotation, 0.7)
-
-                    bone.rotation_quaternion = rotation
-                    bone.keyframe_insert(data_path="rotation_quaternion", frame=frame_number)
-                    previous_rotations[bone_name] = rotation
-
-            bpy.ops.object.mode_set(mode='OBJECT')
-            return total_frames
+                bpy.ops.object.mode_set(mode='OBJECT')
+                return total_frames
+            except Exception as e:
+                print(f"[WARNING] Erreur lors de l'application de l'animation: {e}")
+                # S'assurer qu'on retourne toujours un entier
+                try:
+                    bpy.ops.object.mode_set(mode='OBJECT')
+                except:
+                    pass
+                return 0
 
         total_applied = 0
         for actor_id, arm in self.armatures_by_actor.items():
@@ -747,7 +760,8 @@ class EXOForge:
                     }
                 )
 
-            total_applied = max(total_applied, _apply_animation_to_armature(arm, motion_for_actor))
+            frames_anim = _apply_animation_to_armature(arm, motion_for_actor) or 0
+            total_applied = max(total_applied, frames_anim)
 
         print(f"[SUCCESS] Animation appliquée (LEGION DYNAMIQUE) sur {len(self.armatures_by_actor)} acteur(s)")
 

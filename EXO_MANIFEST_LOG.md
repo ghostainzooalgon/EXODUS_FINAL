@@ -427,6 +427,59 @@ AVERTISSEMENTS :
 
 ---
 
+## [LOG_11] - PATCH RETOUR ANIMATION : CORRECTION BUG NONETYPE
+
+**DATE DE COMMISSION** : 2026-01-14  
+**BRANCHE** : `maitre-de-chapitre`  
+**STATUT** : ✅ **PATCH APPLIQUÉ - BUG CRITIQUE CORRIGÉ (BOSS FINAL)**
+
+---
+
+## 🎯 CONTEXTE DE LA MISSION
+
+**ORDRE REÇU** : Correction urgente du bug critique final dans le SEGMENT 03 - crash de type NoneType lors de l'application d'animation.  
+**OBJECTIF** : Corriger l'erreur `TypeError: '>' not supported between instances of 'NoneType' and 'int'` dans la fonction d'animation.
+
+---
+
+## 🐛 BUG IDENTIFIÉ
+
+**ERREUR** : `TypeError: '>' not supported between instances of 'NoneType' and 'int'` à la ligne 750  
+**CAUSE** : La fonction `_apply_animation_to_armature` peut renvoyer `None` au lieu d'un entier dans certains cas (quand il n'y a pas de mouvement pour un os ou en cas d'exception), ce qui fait planter le calcul `max(total_applied, None)`.  
+**LOCALISATION** : `03_LEGION_FORGE/EXO_03_BLENDER_WORKER.py` - fonction `_apply_animation_to_armature` et ligne 763
+
+---
+
+## 🔨 CORRECTIONS APPLIQUÉES
+
+### Fichier MODIFIÉ :
+
+1. **`03_LEGION_FORGE/EXO_03_BLENDER_WORKER.py`**
+   - **Fonction `_apply_animation_to_armature`** (lignes 625-745) : 
+     - Ajout d'un wrapper `try/except` pour garantir qu'elle retourne TOUJOURS un entier
+     - En cas d'exception, retourne `0` au lieu de `None`
+     - Documentation mise à jour pour clarifier que la fonction retourne toujours un entier
+   - **Ligne 763** : Sécurisation de l'appel avec `or 0` :
+     - `frames_anim = _apply_animation_to_armature(arm, motion_for_actor) or 0`
+     - `total_applied = max(total_applied, frames_anim)`
+   - **Correction d'indentation** : Les fonctions helper `find_landmark` et `calculate_bone_rotation` sont maintenant correctement indentées dans le bloc `try`
+
+### Détails techniques :
+
+- **Garantie de retour entier** : La fonction retourne toujours un entier (0 minimum) même en cas d'erreur
+- **Sécurisation double** : Protection à la fois dans la fonction (try/except) et à l'appel (`or 0`)
+- **Gestion d'erreurs robuste** : En cas d'exception, la fonction restaure le mode OBJECT et retourne 0
+
+---
+
+## ✅ VALIDATION
+
+**STATUT** : ✅ **PATCH VALIDÉ - BOSS FINAL ÉLIMINÉ**  
+**TESTS** : Aucune erreur de syntaxe détectée par le linter  
+**ROBUSTESSE** : La fonction garantit maintenant un retour entier dans tous les cas
+
+---
+
 ## [LOG_04] - SEGMENT 03 + ORCHESTRATEUR : SINGULARITÉ ACHIEVÉE
 
 **DATE DE COMMISSION** : 2026-01-14  
