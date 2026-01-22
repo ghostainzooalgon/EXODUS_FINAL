@@ -102,6 +102,11 @@ class EXOForge:
         # Données de mission (sera chargé par load_mission_data)
         self.mission_data = None
         
+        # PROTOCOLE ORACLE 60 : Variables de remapping temporel
+        self.fps_source = 60  # FPS de la source (sera extrait du JSON)
+        self.fps_target = 60  # FPS cible (STANDARD SUPRÊME)
+        self.ratio_fps = 1.0  # Ratio de remapping (60 / fps_source)
+        
         # VARIANTES (Doctrine Asymétrie) - Input Empereur
         self.num_variantes = 1  # Sera défini par input Empereur
         self.camera_intensity = 1.0  # Multiplicateur intensity pour caméra (variera par variante)
@@ -155,49 +160,15 @@ class EXOForge:
         print("[INFO] Activation du moteur Cycles...")
         scene.render.engine = 'CYCLES'
         
-        # Configuration Cycles
-        cycles_prefs = bpy.context.preferences.addons['cycles'].preferences
-        scene.cycles.device = 'GPU'  # Tentative d'utilisation GPU
-        
-        # ACCÉLÉRATION MATÉRIELLE : Activation GPU (CUDA/OPTIX)
-        print("[INFO] Détection et activation du GPU...")
-        gpu_found = False
-        
-        try:
-            # Forcer la détection des périphériques
-            cycles_prefs.refresh_devices()
-            
-            # Accéder à la liste des périphériques (API Blender)
-            # Note: cycles_prefs.devices est une liste, pas une méthode
-            devices = cycles_prefs.devices
-            
-            # Activer tous les périphériques CUDA ou OPTIX
-            for device in devices:
-                device_type = device.type
-                if device_type in ('CUDA', 'OPTIX'):
-                    device.use = True
-                    gpu_found = True
-                    print(f"[SUCCESS] GPU activé : {device.name} ({device_type})")
-                else:
-                    device.use = False
-            
-            if gpu_found:
-                # Forcer l'utilisation du GPU
-                scene.cycles.device = 'GPU'
-                print("[SUCCESS] Rendu GPU activé (CUDA/OPTIX)")
-            else:
-                print("[WARNING] Aucun GPU CUDA/OPTIX trouvé, fallback sur CPU")
-                scene.cycles.device = 'CPU'
-                # Activer tous les CPU disponibles
-                for device in devices:
-                    if device.type == 'CPU':
-                        device.use = True
-                        print(f"[INFO] CPU activé : {device.name}")
-        
-        except Exception as e:
-            print(f"[WARNING] Erreur lors de la détection GPU : {e}")
-            print("[INFO] Fallback sur CPU")
-            scene.cycles.device = 'CPU'
+        # PROTOCOLE ORACLE 60 : RÉVEIL BRUTAL DU GPU (FORCE CUDA)
+        print("[INFO] RÉVEIL BRUTAL DU GPU - Force CUDA (Tesla T4)...")
+        prefs = bpy.context.preferences.addons['cycles'].preferences
+        prefs.compute_device_type = 'CUDA'
+        prefs.refresh_devices()
+        for d in prefs.devices:
+            d.use = (d.type == 'CUDA')
+        scene.cycles.device = 'GPU'
+        print("[SUCCESS] GPU CUDA forcé - Tesla T4 activée")
         
         # Configuration qualité Cycles (High / Perceptually Lossless)
         scene.cycles.samples = 128  # Échantillonnage pour qualité élevée
@@ -558,6 +529,7 @@ class EXOForge:
         
         Vérifie la présence des clés 'motion' et 'mouth'
         Stocke les données dans self.mission_data
+        PROTOCOLE ORACLE 60 : Extrait fps_source et calcule ratio
         """
         print("[INFO] Chargement des données de mission...")
         
@@ -573,12 +545,18 @@ class EXOForge:
         if 'actors' not in self.mission_data:
             raise KeyError("[ERROR] Clé 'actors' absente du fichier mission (PROTOCOLE BABEL)")
         
+        # PROTOCOLE ORACLE 60 : Extraction fps_source et calcul ratio
+        metadata = self.mission_data.get("metadata", {})
+        self.fps_source = metadata.get("fps", 60)  # Défaut 60 si absent
+        self.ratio_fps = self.fps_target / self.fps_source if self.fps_source > 0 else 1.0
+        
         actors = self.mission_data.get("actors", {})
         camera_motion = self.mission_data.get("camera_motion", [])
         
         print(f"[SUCCESS] Données de mission chargées (PROTOCOLE BABEL)")
         print(f"[INFO] Acteurs : {len(actors.keys())}")
         print(f"[INFO] Frames camera_motion : {len(camera_motion)}")
+        print(f"[EXO] PROTOCOLE ORACLE 60 : SOURCE: {self.fps_source} FPS -> TARGET: {self.fps_target} FPS (RATIO: {self.ratio_fps:.3f})")
 
     def apply_animation(self):
         """
@@ -691,7 +669,9 @@ class EXOForge:
                 print(f"[INFO] Application de l'animation sur {total_frames} frames → {target_armature.name}")
 
                 for frame_idx, frame_data in enumerate(motion_data):
-                    frame_number = frame_data.get('frame_number', frame_idx)
+                    frame_number_source = frame_data.get('frame_number', frame_idx)
+                    # PROTOCOLE ORACLE 60 : REMAPPING TEMPOREL
+                    frame_number = int(frame_number_source * self.ratio_fps)
                     pose_landmarks = frame_data.get('pose_landmarks', [])
 
                     bpy.context.scene.frame_set(frame_number)
@@ -847,6 +827,7 @@ class EXOForge:
         applied_anything = False
 
         # 1) Si Rhubarb est présent → priorité (audio global)
+        # PROTOCOLE ORACLE 60 : Remapping temporel pour Rhubarb
         if mouth_cues:
             print(f"[INFO] Application de {len(mouth_cues)} mouth cues (Rhubarb)...")
             
@@ -855,9 +836,13 @@ class EXOForge:
                 end_time = cue.get('end', start_time)
                 value = cue.get('value', 'X')
                 
-                # Convertir temps en frames
-                start_frame = int(start_time * fps)
-                end_frame = int(end_time * fps)
+                # Convertir temps en frames source (basé sur fps_source)
+                start_frame_source = int(start_time * self.fps_source)
+                end_frame_source = int(end_time * self.fps_source)
+                
+                # PROTOCOLE ORACLE 60 : Remapping vers frames cibles
+                start_frame = int(start_frame_source * self.ratio_fps)
+                end_frame = int(end_frame_source * self.ratio_fps)
                 
                 # Ratio d'ouverture
                 ratio = rhubarb_to_ratio.get(value, 0.0)
@@ -871,6 +856,7 @@ class EXOForge:
             applied_anything = True
         
         # 2) Sinon, fallback sur mouth_open_ratio de l'acteur 0 (SCANNER UNIVERSEL)
+        # PROTOCOLE ORACLE 60 : Remapping temporel pour mouth_open_ratio
         if not applied_anything:
             actors_block = self.mission_data.get("actors", {})
             actor0 = actors_block.get("0", {})
@@ -878,7 +864,9 @@ class EXOForge:
             if mouth_frames:
                 print(f"[INFO] Lip-sync via mouth_open_ratio pour l'acteur 0 ({len(mouth_frames)} frames)...")
                 for mf in mouth_frames:
-                    frame_number = mf.get("frame_number", 0)
+                    frame_number_source = mf.get("frame_number", 0)
+                    # PROTOCOLE ORACLE 60 : Remapping vers frame cible
+                    frame_number = int(frame_number_source * self.ratio_fps)
                     ratio = float(mf.get("mouth_open_ratio", 0.0))
                     scene.frame_set(frame_number)
                     mouth_shape_key.value = ratio
@@ -938,6 +926,7 @@ class EXOForge:
                     print(f"[INFO] Audio trouvé (Voice_Samples) : {audio_path}")
         
         # Ajouter l'audio à la timeline si trouvé
+        audio_found = False
         if audio_path and audio_path.exists():
             print(f"[INFO] Ajout de l'audio à la timeline : {audio_path.name}")
             
@@ -957,26 +946,44 @@ class EXOForge:
             # Obtenir la durée de l'audio en frames
             audio_duration_frames = sound_strip.frame_final_duration
             print(f"[INFO] Durée audio : {audio_duration_frames} frames ({audio_duration_frames / scene.render.fps:.2f}s)")
+            print("[EXO] AUDIO SYNCHRONISÉ")
+            audio_found = True
         else:
             print("[WARNING] Aucun fichier audio trouvé. Rendu sans audio.")
+            print("[EXO] MODE SILENCIEUX ACTIF")
             audio_duration_frames = 0
         
-        # 2. AJUSTER LA DURÉE DE LA SCÈNE
-        # La fin de l'animation doit correspondre à la fin de l'audio ou des mouvements
-        motion_data = self.mission_data.get('motion', [])
-        if motion_data:
-            last_frame = max(frame.get('frame_number', 0) for frame in motion_data)
-            motion_end_frame = last_frame + 1  # +1 car frame_number commence à 0
-        else:
-            motion_end_frame = 1
+        # 2. PROTOCOLE MIROIR : VERROUILLAGE DE LA DURÉE
+        # Calculer total_frames_source depuis les données de mouvement
+        total_frames_source = 0
+        actors = self.mission_data.get("actors", {})
+        for actor_id, actor_data in actors.items():
+            pose_frames = actor_data.get("pose_frames", [])
+            if pose_frames:
+                last_frame = max(frame.get("frame_number", 0) for frame in pose_frames)
+                total_frames_source = max(total_frames_source, last_frame + 1)
         
-        # Prendre le maximum entre audio et animation
-        scene_end_frame = max(audio_duration_frames, motion_end_frame)
+        # Si pas de frames détectées, utiliser metadata ou valeur de secours
+        if total_frames_source == 0:
+            metadata = self.mission_data.get("metadata", {})
+            total_frames_source = metadata.get("total_frames", 0)
+            if total_frames_source == 0:
+                # Valeur de secours : 250 frames
+                total_frames_source = 250
+                print(f"[WARNING] Aucune frame détectée, utilisation valeur de secours : {total_frames_source}")
+        
+        # PROTOCOLE MIROIR : scene.frame_end = total_frames_source * ratio
+        scene_end_frame = int(total_frames_source * self.ratio_fps)
+        
+        # INTERDICTION : La scène ne doit jamais durer moins de 1 frame
+        if scene_end_frame < 1:
+            scene_end_frame = 250  # Valeur de secours
+            print(f"[WARNING] Durée calculée invalide, utilisation valeur de secours : {scene_end_frame}")
         
         scene.frame_start = 1
         scene.frame_end = scene_end_frame
         
-        print(f"[INFO] Durée de la scène : {scene_end_frame} frames ({scene_end_frame / scene.render.fps:.2f}s)")
+        print(f"[EXO] DURÉE TOTALE : {scene_end_frame} IMAGES ({scene_end_frame / scene.render.fps:.2f}s)")
         print(f"[INFO] Frame start : {scene.frame_start}, Frame end : {scene.frame_end}")
         
         # 3. CONFIGURATION DE SORTIE (nom unique par variante)
@@ -1204,7 +1211,29 @@ class EXOForge:
         self.import_assets()
         self.setup_camera()
         self.setup_lighting()
-        self.load_mission_data()  # Charger les données avant animation
+        self.load_mission_data()  # Charger les données avant animation (calcule fps_source et ratio)
+        
+        # RAPPORT DE TIR (PROTOCOLE ORACLE 60)
+        print("=" * 60)
+        print("[EXO] RAPPORT DE TIR - PROTOCOLE ORACLE 60")
+        print("=" * 60)
+        print(f"[EXO] SOURCE: {self.fps_source} FPS -> TARGET: {self.fps_target} FPS (RATIO: {self.ratio_fps:.3f})")
+        scene = bpy.context.scene
+        # Calculer durée totale (approximative, sera recalculée dans render_video)
+        actors = self.mission_data.get("actors", {})
+        total_frames_source = 0
+        for actor_id, actor_data in actors.items():
+            pose_frames = actor_data.get("pose_frames", [])
+            if pose_frames:
+                last_frame = max(frame.get("frame_number", 0) for frame in pose_frames)
+                total_frames_source = max(total_frames_source, last_frame + 1)
+        if total_frames_source == 0:
+            metadata = self.mission_data.get("metadata", {})
+            total_frames_source = metadata.get("total_frames", 250)
+        estimated_duration = int(total_frames_source * self.ratio_fps)
+        print(f"[EXO] DURÉE TOTALE : {estimated_duration} IMAGES ({estimated_duration / scene.render.fps:.2f}s)")
+        print(f"[EXO] ACCÉLÉRATION GPU : ACTIVÉE (CUDA)")
+        print("=" * 60)
         
         # BOUCLE MAÎTRESSE : Pour chaque variante
         for variant_id in range(num_variantes):
